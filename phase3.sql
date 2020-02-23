@@ -1,5 +1,4 @@
-﻿/* the char lengths were kind of just guessed on */
-/*ALL THE CREATE TABLEs are its own file so we can copy into sqlplus on WPI server and run it */
+/* the char lengths were kind of just guessed on */
 /*Parts 1 and 2 of PHASE 3 Team 37 Surya Vadivazhagu & James Flynn */
 
 -- Drop the tables first
@@ -445,7 +444,7 @@ create or replace trigger PrintPatientInfo
             end loop;
         close doctorRegistry;
         end;
-
+/
 
 
 

@@ -1,6 +1,6 @@
 ﻿/* the char lengths were kind of just guessed on */
 /*ALL THE CREATE TABLEs are its own file so we can copy into sqlplus on WPI server and run it */
-/*Part 1 of phase 2 Team 37 Surya Vadivazhagu & James Flynn */
+/*Parts 1 and 2 of PHASE 3 Team 37 Surya Vadivazhagu & James Flynn */
 
 -- Drop the tables first
 DROP TABLE Employee CASCADE CONSTRAINTS;
@@ -312,6 +312,149 @@ AND D.PATIENTSSN = B.PATIENT_SSN
 
 
 
---Part 2: Database Triggers. We put each bullet point instruction as its own trigger instead of combining.
+--Part 2: Database Triggers. We put each bullet point instruction as its own trigger instead of combining many to one.
+
+-- Part 2 : Doctor must leave comment if visiting patient in ICU
+CREATE OR REPLACE Trigger LeaveComment
+    BEFORE INSERT ON Examine
+    FOR EACH ROW
+    DECLARE
+        CNT varchar2(20);
+    BEGIN
+        SELECT count(*) INTO CNT
+        FROM RoomService,StayIn
+        WHERE AdmissionNum = :new.AdmissionNum AND RoomService.RoomNum = StayIn.RoomNum AND RoomService.Service = 'ICU';
+            IF CNT !=0 then
+                IF :new.Comments IS NULL then
+                RAISE_APPLICATION_ERROR(-20000, 'Doctor must leave a comment if visiting patient in ICU');
+                END IF;
+            END IF;
+    END;
+/
+
+-- Part 2 : Insurance Payment Automatically calculated at 65% of total payment
+CREATE OR REPLACE TRIGGER AutomaticPaymentCalculation
+    BEFORE INSERT or UPDATE ON Admission
+    FOR EACH ROW
+    BEGIN
+        :new.InsurancePayment := :new.totalPayment*0.65;
+    END;
+/
+
+
+--Part 2 : Emp with Rank 0 must have supervisor at Rank 1. Reg employee must always have supervisor
+CREATE OR REPLACE TRIGGER RegEmpMustHaveSup
+    before insert or update on Employee
+    for each row
+    when (new.EmpRank = 0)
+    declare divManagerRank INTEGER := 1;
+    Begin
+        select EmpRank into divManagerRank from Employee where EmpRank = :new.SupervisorId;
+        If(divManagerRank != 1) then
+            RAISE_APPLICATION_ERROR(-20001, 'Regular Employees  must have Division Managers as their supervisor.' );
+
+        end if;
+    end;
+/
+
+-- Part 2: Emp with Rank 1 must have a supervisor at Rank 2
+create or replace trigger DivMangMustHaveSup
+    before insert or update on Employee
+    for each row
+    when (new.EmpRank = 1)
+    declare gmRank INTEGER;
+    begin
+        select EmpRank into gmRank from Employee where ID =:new.SupervisorId;
+            if(gmRank != 2) then
+                RAISE_APPLICATION_ERROR(-20002, 'Division Managers need to have a General Manager as their supervisor');
+            end if;
+    end;
+/
+
+-- Part 2 : General Managers can't have a supervisor
+create or replace trigger GMangNoSup
+    BEFORE INSERT or UPDATE on Employee
+    FOR EACH ROW
+    WHEN (new.EmpRank = 2)
+    DECLARE gmRank number;
+    BEGIN
+        SELECT EmpRank INTO gmRank FROM Employee WHERE ID =:new.SupervisorId;
+            IF(gmRank is not NULL)then
+                RAISE_APPLICATION_ERROR(-20003, 'General managers should have no manager');
+            END IF;
+    END;
+/
+
+-- Part 2 : When a patient is admitted into room w/ service "emergency service" futurevist should be 2 months after that
+
+create or replace trigger autoSetFutureVisit
+    BEFORE INSERT ON StayIn
+    FOR EACH ROW
+    DECLARE roomService varchar(20);
+    admitDate date;
+    Begin
+        SELECT RoomService.Service, Admission.admissionDate INTO roomService, admitDate
+        FROM Admission, RoomService, StayIn
+        WHERE :new.admissionNum = Admission.admissionNum
+        AND :new.RoomNum = RoomService.RoomNum
+        AND RoomService.Service = 'Emergency';
+        IF(roomService != null) Then
+            UPDATE Admission SET futureVisit = ADD_MONTHS(admitDate, 2) WHERE admissionNum = :new.admissionNum;
+            END IF;
+    END;
+/
+
+-- Part 2 : if a piece of equipment is of type Ct scanner or Ultrasound purchase year != null, must be after 2006
+create or replace trigger EquipmentPurchaseYearCheck
+    before insert or update on Equipment
+    for each row
+    begin
+        if(:new.TypeId = 'Ultrasound' or :new.TypeId = 'CT Scanner') then
+            if(:new.PurchaseYear = null or EXTRACT(YEAR FROM :new.purchaseYear) < 2007 ) then
+                raise_application_error(-20004, 'Purchase year cannot be null or before 2006 for CT scanner and Ultrasound');
+            end if;
+        end if;
+    end;
+/
+
+-- Part 2 : When a patient leaves hospital print out their fname, lname, address, all comments, and which doctor
+
+create or replace trigger PrintPatientInfo
+        after update on Admission
+        for each row
+        declare cursor doctorRegistry is select Doctor.FirstName, Doctor.LastName, Examine.Comments FROM Doctor,
+        Examine where Doctor.Id = Examine.DoctorId and :new.AdmissionNum = Examine.AdmissionNum;
+        patientFname varchar2(30);
+        patientLname varchar2(30);
+        patientAdd varchar2(50);
+        patientDoc doctorRegistry%ROWTYPE;
+        begin
+            select FirstName, LastName, Address INTO patientFname, patientLname, patientAdd
+            from Patient
+            where Patient.SSN = :new.PatientSSN;
+        open doctorRegistry;
+            loop
+                fetch doctorRegistry into patientDoc;
+                exit when doctorRegistry%NOTFOUND;
+                DBMS_OUTPUT.PUT_LINE(patientFname);
+                DBMS_OUTPUT.PUT_LINE(patientLname);
+                dbms_output.put_line(patientAdd);
+                dbms_output.PUT_LINE(patientDoc.FirstName);
+                dbms_output.PUT_LINE(patientDoc.LastName);
+                dbms_output.PUT_LINE(patientDoc.Comments);
+            end loop;
+        close doctorRegistry;
+        end;
+
+
+
+
+
+
+
+
+
+
+
 
 

@@ -1,0 +1,105 @@
+Script started on Mon Feb 24 12:35:40 2020
+[?1034hbash-4.2$ javac REp  eporting.java
+bash-4.2$ java Reportings  svadivazhagu 321
+Connecting to the database...
+Logged in
+1- Report Patients Basic Information
+2- Report Doctors Basic Information
+3- Report Admissions Information
+4- Update Admissions Payment
+
+Disconnected from the server.
+bash-4.2$ cl  java re  Reporting svadiv     vadivazhagu 321 1
+Connecting to the database...
+Logged in
+Enter Patient SSN: 100081645
+
+ Now Running SELECT * FROM Patient WHERE SSN = '100081645'
+
+Patient SSN: 100081645
+Patient First Name: William
+Patient Last Name: Jacobs
+Patient Address: 07809 Sanchez Falls Apt.
+
+Disconnected from the server.
+bash-4.2$ clear     java Reporting svadivazhagu 321 1 2
+Connecting to the database...
+Logged in
+Enter Doctor ID: 59835
+
+ Now Running SELECT * FROM Doctor WHERE Id = '59835'
+
+Doctor ID: 59835
+Doctor First Name: Amanda
+Doctor Last Name: Green
+Doctor Gender: F
+
+Disconnected from the server.
+bash-4.2$ java Reporting svadivazhagu 321 2 3
+Connecting to the database...
+Logged in
+Enter Admission Number: 1
+
+ Now Running SELECT * FROM Admission WHERE AdmissionNum = 1
+
+
+ Now Running SELECT DISTINCT RoomNum, StartDate, EndDate FROM StayIn WHERE AdmissionNum = 1
+
+ Now Running SELECT DISTINCT DoctorId FROM Examine WHERE AdmissionNum = 1
+
+Admission Number: 1
+Admission Date: 2019-01-02 00:00:00
+Patient SSN: 100081645
+TotalPayment: 500000
+Rooms:
+    RoomNum: 172  From Date: 2019-01-02 00:00:00  End Date: 2019-02-15 00:00:00
+Doctors examined the patient in this admission:
+    Doctor ID: 59835
+java.sql.SQLException: Closed Resultset: next
+	at oracle.jdbc.driver.InsensitiveScrollableResultSet.ensureOpen(InsensitiveScrollableResultSet.java:114)
+	at oracle.jdbc.driver.InsensitiveScrollableResultSet.next(InsensitiveScrollableResultSet.java:402)
+	at Reporting.queryRun(Reporting.java:66)
+	at Reporting.main(Reporting.java:164)
+
+Disconnected from the server.
+bash-4.2$ java Reporting svadivazhagu 321 3 4
+Connecting to the database...
+Logged in
+Enter Admission Number: 1
+Enter the new total payment: 1000000000          9999
+Now Running UPDATE Admission SET TotalPayment = 9999 WHERE AdmissionNum= 1
+
+Successfully updated admission number 1's total payment to $9999.
+
+Disconnected from the server.
+bash-4.2$ java Reporting svadivazhagu 321 4 3
+Connecting to the database...
+Logged in
+Enter Admission Number: 1
+
+ Now Running SELECT * FROM Admission WHERE AdmissionNum = 1
+
+
+ Now Running SELECT DISTINCT RoomNum, StartDate, EndDate FROM StayIn WHERE AdmissionNum = 1
+
+ Now Running SELECT DISTINCT DoctorId FROM Examine WHERE AdmissionNum = 1
+
+Admission Number: 1
+Admission Date: 2019-01-02 00:00:00
+Patient SSN: 100081645
+TotalPayment: 9999
+Rooms:
+    RoomNum: 172  From Date: 2019-01-02 00:00:00  End Date: 2019-02-15 00:00:00
+Doctors examined the patient in this admission:
+    Doctor ID: 59835
+java.sql.SQLException: Closed Resultset: next
+	at oracle.jdbc.driver.InsensitiveScrollableResultSet.ensureOpen(InsensitiveScrollableResultSet.java:114)
+	at oracle.jdbc.driver.InsensitiveScrollableResultSet.next(InsensitiveScrollableResultSet.java:402)
+	at Reporting.queryRun(Reporting.java:66)
+	at Reporting.main(Reporting.java:164)
+
+Disconnected from the server.
+bash-4.2$ exit
+exit
+
+Script done on Mon Feb 24 12:37:34 2020

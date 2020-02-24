@@ -425,7 +425,7 @@ create or replace trigger PrintPatientInfo
         Examine where Doctor.Id = Examine.DoctorId and :new.AdmissionNum = Examine.AdmissionNum;
         patientFname varchar2(30);
         patientLname varchar2(30);
-        patientAdd varchar2(50);
+        patientAdd varchar2(50); 
         patientDoc doctorRegistry%ROWTYPE;
         begin
             select FirstName, LastName, Address INTO patientFname, patientLname, patientAdd
